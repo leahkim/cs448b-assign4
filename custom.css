@@ -1,0 +1,19 @@
+#maps {
+    margin: 0 auto;
+    max-width: 1024px;
+    width: 100%;
+}
+
+#maps div {
+    float: left;
+    position: relative;
+}
+
+#maps p.legend {
+    width: 100%;
+    text-align: center;
+    bottom: 0;
+    left: 0;
+    font-weight: bold;
+    font-size: 15px;
+}
