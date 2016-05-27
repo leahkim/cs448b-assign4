@@ -44,6 +44,7 @@ var legend_tip = d3.tip()
     .attr('class', 'legend-tip')
     .offset([-10, 0])
     .html(function(d) {
+            console.log(d);
             return (d.name + "<br/> <strong>Total incidents:</strong> <span style='color:red'>" + d.incident_count + "</span>" + '<br/>'
             + "<strong>Total kidnapped:</strong> <span style='color:red'>" + d.total_kid + "</span>" + '<br/>'
             + "<strong>Total killed:</strong> <span style='color:red'>" + d.total_kill + "</span>");
@@ -107,6 +108,7 @@ function draw_rectangle(group) {
         .transition().duration(750)
         .attr("x", function(d) { return d.i * (fig_w + margin); })
         .attr("y", function(d) { return d.j * (fig_h + margin); })
+        .attr("transform", "translate (1, 1)")
         .attr("width", fig_w)
         .attr("height", fig_h)
         .style("stroke", function(d) { return d.bordercolor; })
@@ -118,6 +120,7 @@ function draw_rectangle(group) {
         .attr("class", "fig")
         .attr("x", function(d) { return d.i * (fig_w + margin); })
         .attr("y", function(d) { return d.j * (fig_h + margin); })
+        .attr("transform", "translate (1, 1)")
         .attr("width", fig_w)
         .attr("height", fig_h)
         .style("stroke", function(d) { return d.bordercolor; })
@@ -203,31 +206,63 @@ function get_heatmap_data() {
 
 function draw_heatmap() {
     var data = get_heatmap_data();
+
+    // LINE FOR TESTING!
+    data = [{'year': 1970, "rate": 0.0}, {'year': 1971, "rate": 0.1}, {'year': 1972, "rate": 0.200001}, {'year': 1973, "rate": 0.30001},
+        {'year': 1974, "rate": 0.400001}, {'year': 1975, "rate": 0.500001}, {'year': 1976, "rate": 0.60001}, {'year': 1977, "rate": 0.70001},
+        {'year': 1978, "rate": 0.80001}, {'year': 1979, "rate": 0.89999}, {'year': 1980, "rate": 1.0}];
+
     var svg = d3.select("#heatmap_canvas").attr("width", SLIDER_W).attr("height", SLIDER_H);
     var labelGroup = svg.append("g").attr("id", "labelGroup");
-
-    // TODO: finish implementing heatmap drawing and labeling / legending.
+    var barGroup = svg.append("g").attr("id", "barGroup");
 
     var rect_w = Math.floor(SLIDER_W / 44) - 2, rect_h = rect_w;
     var legend_w = SLIDER_W / HEAT_COLORS.length;
 
-    for (var i = 0 ; i < data.length; i++) {
+    // TODO: finish implementing heatmap drawing and labeling / legending.
 
-    }
+    labelGroup.selectAll().data(data)
+        .enter()
+        .append("text")
+        .text(function(d) { return (d.year % 100); })
+        .attr("x", function(d, i) { return i * rect_w; })
+        .attr("y", 0)
+        .attr("dx", "1.4em")
+        .attr("dy", "1em")
+        .attr("font-size", "8px")
+        .attr("class", "heatmap_label")
+        .style("text-anchor", "middle")
+        .style("fill", "#808080");
+
+    var colorScale = d3.scale.quantile()
+        .domain([0, 1])
+        .range(HEAT_COLORS);
+
+
+    var cards = barGroup.selectAll().data(data);
+
+    cards.enter()
+        .append("rect")
+        .attr("class", "heatmap")
+        .attr("x", function(d, i) { return i * rect_w; })
+        .attr("y", 10)
+        .attr("rx", 3)
+        .attr("ry", 3)
+        .attr("width", rect_w)
+        .attr("height", rect_h)
+        .style("fill", function(d) { return colorScale(d.rate); })
+        .on('mouseover', function(d) {
+            year_selected = d.year;
+            set_year_data();
+            update_legtip();
+
+            var group = d3.select("#figGroup");
+            draw_rectangle(group);
+        });
+
+    cards.exit().remove();
 }
 
-/*
- updated_legend.enter()
- .append("g")
- .each(function(d, i) {
- var g = d3.select(this);
- g.append("rect")
- .attr("x", (Math.floor(i / 2)) * 210)
- .attr("y", (i % 2) * 25)
- .attr("width", 15)
- .attr("height", 15)
- .style("fill", d.color);
- })*/
 
 
 function draw_timeline() {
@@ -265,9 +300,11 @@ function get_legend_data() {
 }
 
 
-function create_legend() {
+function update_legtip() {
     var legend_data = get_legend_data();
-    legend_data.sort(function(a, b) { return a.order - b.order; });
+    legend_data.sort(function (a, b) {
+        return a.order - b.order;
+    });
 
     var legend = d3.select("#legend")
         .attr("x", 65)
@@ -275,43 +312,50 @@ function create_legend() {
         .attr("height", 50)
         .attr("width", CANVAS_W + 100);
 
+    var legend_item = legend.selectAll(".legend_item").data(legend_data);
+
     legend.call(legend_tip);
 
-    var updated_legend = legend.selectAll("g").data(legend_data);
+    return legend_item;
+}
 
-    updated_legend.each(function(d, i) {
-            var g = d3.select(this);
-            g.append("rect")
-                .attr("x", (Math.floor(i / 2)) * 170)
-                .attr("y", (i % 2) * 25)
-                .attr("width", 15)
-                .attr("height", 15)
-                .style("fill", d.color);
+function create_legend() {
+    var legend_item = update_legtip();
 
-            g.append("text")
-                .attr("x", (Math.floor(i / 2)) * 170 + 20)
-                .attr("y", (i % 2) * 25 + 12)
-                .attr("width", 90)
-                .attr("height", 30)
-                .text(d.name)
-                .attr("font-size", "11pt")
-                .attr("font-family", "sans-serif")
-                .style("fill", d.color);
-        });
+    legend_item.each(function(d, i) {
+        var g = d3.select(this);
+        g.select("rect")
+            .attr("x", (Math.floor(i / 2)) * 200)
+            .attr("y", (i % 2) * 25)
+            .attr("width", 15)
+            .attr("height", 15)
+            .style("fill", d.color);
 
-    updated_legend.enter()
+        g.select("text")
+            .attr("x", (Math.floor(i / 2)) * 200 + 20)
+            .attr("y", (i % 2) * 25 + 12)
+            .attr("width", 90)
+            .attr("height", 30)
+            .text(d.name)
+            .attr("font-size", "11pt")
+            .attr("font-family", "sans-serif")
+            .style("fill", d.color);
+    });
+
+    legend_item.enter()
         .append("g")
-        .each(function(d, i) {
+        .attr("class", "legend_item")
+        .each(function (d, i) {
             var g = d3.select(this);
             g.append("rect")
-                .attr("x", (Math.floor(i / 2)) * 210)
+                .attr("x", (Math.floor(i / 2)) * 200)
                 .attr("y", (i % 2) * 25)
                 .attr("width", 15)
                 .attr("height", 15)
                 .style("fill", d.color);
 
             g.append("text")
-                .attr("x", (Math.floor(i / 2)) * 210 + 20)
+                .attr("x", (Math.floor(i / 2)) * 200 + 20)
                 .attr("y", (i % 2) * 25 + 12)
                 .attr("width", 90)
                 .attr("height", 30)
@@ -323,7 +367,7 @@ function create_legend() {
         .on('mouseover', legend_tip.show)
         .on('mouseout', legend_tip.hide);
 
-    updated_legend.exit().remove();
+    legend_item.exit().remove();
 }
 
 
