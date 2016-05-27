@@ -8,6 +8,7 @@
     <title>Terrorism Dashboard</title>
 
     <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 
     <!-- Bootstrap -->
@@ -26,7 +27,13 @@
 
   </head>
   <body>
-    <svg id="timeline_canvas"></svg>
-    <script src="timeline.js"></script>
+    <h1>Kidnapping as Terrorist Act: 1970~2014</h1>
+    <div><svg id="heatmap_canvas"></svg></div>
+    <div id="display_info"></div>
+    <div>
+      <svg id="timeline_canvas"></svg>
+      <svg id="legend"></svg>
+      <script src="timeline.js"></script>
+    </div>
   </body>
 </html>
