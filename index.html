@@ -29,16 +29,25 @@
 
   </head>
   <body>
-    <h1>Kidnapping as Terrorist Act: 1970~2014</h1>
+    <h1>Kidnapping by Terrorists: 1970~2014</h1>
     <div><svg id="heatmap_canvas"></svg></div>
     <div id="display_info"></div>
-    <div><input id="toggle-one" checked type="checkbox">
-      <script>
-        $(function() {
-          $('#toggle-one').bootstrapToggle();
-          $('label.btn.btn-primary.toggle-on').html("By Region");
+
+    <div><div id="toggle_wrapper"><input id="toggle-one" checked type="checkbox" data-onstyle="default"></div></div>
+    <script>
+      $(function() {
+        $('#toggle-one').bootstrapToggle({
+          on: 'By Region',
+          off: 'By Target Type'
         });
-      </script></div>
+        $('#toggle-one').change(function() {
+          toggle_type($(this).prop('checked'));
+          draw_rectangle();
+          create_legend();
+        });
+      });
+    </script>
+
     <div>
       <svg id="timeline_canvas"></svg>
       <svg id="legend"></svg>

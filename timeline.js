@@ -90,13 +90,17 @@ function set_year_data() {
     console.log("Error! No data found for year: " + year_selected);
 }
 
+function toggle_type(is_region) {
+    mode = is_region ? "region" : "type";
+}
 
-function draw_rectangle(group) {
+function draw_rectangle() {
+    var group = d3.select("#figGroup");
     var data = selected_data;
-    d3.select("#display_info").html("Year: " + year_selected + "<br/> From "
-        + data.incident_count.total + " incidents: "
-        + data.kidnapped.total + " kidnapped, "
-        + data.killed.total + " killed.");
+    d3.select("#display_info").html("In " + year_selected + ", there were "
+        + data.incident_count.total + " incidents. "
+        + data.kidnapped.total + " were kidnapped, "
+        + data.killed.total + " were killed.");
     set_width_height(data.incident_count.total);
     data = transform_data(data);
 
@@ -219,8 +223,6 @@ function draw_heatmap() {
     var rect_w = Math.floor(SLIDER_W / 44) - 2, rect_h = rect_w;
     var legend_w = SLIDER_W / HEAT_COLORS.length;
 
-    // TODO: finish implementing heatmap drawing and labeling / legending.
-
     labelGroup.selectAll().data(data)
         .enter()
         .append("text")
@@ -239,7 +241,7 @@ function draw_heatmap() {
         .range(HEAT_COLORS);
 
 
-    var cards = barGroup.selectAll().data(data);
+    var cards = barGroup.selectAll("rect").data(data);
 
     cards.enter()
         .append("rect")
@@ -252,15 +254,26 @@ function draw_heatmap() {
         .attr("height", rect_h)
         .style("fill", function(d) { return colorScale(d.rate); })
         .on('mouseover', function(d) {
+            d3.select(this)
+                .attr("height", rect_h * 1.4);
             year_selected = d.year;
             set_year_data();
             update_legtip();
 
-            var group = d3.select("#figGroup");
-            draw_rectangle(group);
+            draw_rectangle();
+        })
+        .on("mouseout", function(d) {
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("width", rect_w)
+                .attr("height", rect_h);
         });
 
     cards.exit().remove();
+
+    /** Need to create horizontal legend **/
+
 }
 
 
@@ -273,7 +286,7 @@ function draw_timeline() {
     var fig_group = svg.append("g").attr("id", "figGroup");
 
     create_legend();
-    draw_rectangle(fig_group);
+    draw_rectangle();
 }
 
 
@@ -325,14 +338,14 @@ function create_legend() {
     legend_item.each(function(d, i) {
         var g = d3.select(this);
         g.select("rect")
-            .attr("x", (Math.floor(i / 2)) * 200)
+            .attr("x", (Math.floor(i / 2)) * 215)
             .attr("y", (i % 2) * 25)
             .attr("width", 15)
             .attr("height", 15)
             .style("fill", d.color);
 
         g.select("text")
-            .attr("x", (Math.floor(i / 2)) * 200 + 20)
+            .attr("x", (Math.floor(i / 2)) * 215 + 20)
             .attr("y", (i % 2) * 25 + 12)
             .attr("width", 90)
             .attr("height", 30)
@@ -348,14 +361,14 @@ function create_legend() {
         .each(function (d, i) {
             var g = d3.select(this);
             g.append("rect")
-                .attr("x", (Math.floor(i / 2)) * 200)
+                .attr("x", (Math.floor(i / 2)) * 215)
                 .attr("y", (i % 2) * 25)
                 .attr("width", 15)
                 .attr("height", 15)
                 .style("fill", d.color);
 
             g.append("text")
-                .attr("x", (Math.floor(i / 2)) * 200 + 20)
+                .attr("x", (Math.floor(i / 2)) * 215 + 20)
                 .attr("y", (i % 2) * 25 + 12)
                 .attr("width", 90)
                 .attr("height", 30)
