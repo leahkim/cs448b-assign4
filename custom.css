@@ -41,3 +41,9 @@ rect.heatmap {
 #toggle_wrapper {
     float: right;
 }
+
+text.mono {
+    font-size: 8pt;
+    font-family: Consolas, courier;
+    fill: #aaa;
+}

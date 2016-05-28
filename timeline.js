@@ -17,7 +17,7 @@ var TYPE_COLOR = {"Government": "#1f77b4", "Civilians & Properties":"#ff7f0e", "
     "Military / Police": "#ff9896", "Journalists & Media": "#9467bd",
     "Educational Institution": "#8c564b", "NGO": "#e377c2",
     "Religious Figures": "#bcbd22", "Transit & Infra": "#17becf", "Other": "#bcbddc"};
-var HEAT_COLORS = ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#b00026', '#87001D'];
+var HEAT_COLORS = ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026', '#4d0017'];
 
 var DEAD_COLOR = "#bfbfbf";
 
@@ -32,7 +32,7 @@ var HIGH_CUTOFF = 1000;
 var NUMCOL = 20, NUMROW = 5;
 var NUMFIGS = 100;
 var CANVAS_W = 1000, CANVAS_H = 450;
-var SLIDER_W = CANVAS_W + 60, SLIDER_H = 60;
+var SLIDER_W = CANVAS_W, SLIDER_H = 80;
 
 /** GLOBAL VARIABLES **/
 var mode = "region";
@@ -214,7 +214,7 @@ function draw_heatmap() {
     // LINE FOR TESTING!
     data = [{'year': 1970, "rate": 0.0}, {'year': 1971, "rate": 0.1}, {'year': 1972, "rate": 0.200001}, {'year': 1973, "rate": 0.30001},
         {'year': 1974, "rate": 0.400001}, {'year': 1975, "rate": 0.500001}, {'year': 1976, "rate": 0.60001}, {'year': 1977, "rate": 0.70001},
-        {'year': 1978, "rate": 0.80001}, {'year': 1979, "rate": 0.89999}, {'year': 1980, "rate": 1.0}];
+        {'year': 1978, "rate": 0.80001}, {'year': 1979, "rate": 0.90}, {'year': 1980, "rate": 1.0}];
 
     var svg = d3.select("#heatmap_canvas").attr("width", SLIDER_W).attr("height", SLIDER_H);
     var labelGroup = svg.append("g").attr("id", "labelGroup");
@@ -229,17 +229,18 @@ function draw_heatmap() {
         .text(function(d) { return (d.year % 100); })
         .attr("x", function(d, i) { return i * rect_w; })
         .attr("y", 0)
-        .attr("dx", "1.4em")
+        .attr("dx", "1.3em")
         .attr("dy", "1em")
         .attr("font-size", "8px")
         .attr("class", "heatmap_label")
         .style("text-anchor", "middle")
         .style("fill", "#808080");
 
-    var colorScale = d3.scale.quantile()
+    var colorScale = d3.scale.quantize()
         .domain([0, 1])
         .range(HEAT_COLORS);
 
+    console.log(colorScale);
 
     var cards = barGroup.selectAll("rect").data(data);
 
@@ -272,8 +273,44 @@ function draw_heatmap() {
 
     cards.exit().remove();
 
-    /** Need to create horizontal legend **/
+    var blGroup = svg.append("g").attr("id", "blGroup");
 
+    var quantize_cutoff = []
+    for (var i = 0; i < HEAT_COLORS.length; i++) {
+        var cutoff = i/HEAT_COLORS.length;
+        quantize_cutoff.push(cutoff);
+    }
+
+    var legend = blGroup.selectAll(".bar_legend")
+        .data(quantize_cutoff);
+
+    legend.enter()
+        .append("g")
+        .attr("class", "bar_legend")
+        .each(function (d, i) {
+            var g = d3.select(this);
+            console.log(d);
+            g.append("rect")
+                .attr("x", legend_w * i)
+                .attr("y", rect_h + 25)
+                .attr("width", legend_w)
+                .attr("height", rect_h / 2)
+                .style("fill", HEAT_COLORS[i]);
+
+            g.append("text")
+                .attr("class", "mono")
+                .text(function(d) {
+                    if (d == 0) {
+                        return "death rate ≥ " + d.toFixed(0);
+                    } else {
+                        return "≥ " + d.toFixed(2);
+                    }
+                })
+                .attr("x", legend_w * i)
+                .attr("y", rect_h + 45);
+        });
+
+    legend.exit().remove();
 }
 
 
