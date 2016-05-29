@@ -79,5 +79,13 @@ $(document).ready(function() {
     });
 });
 
+/** Pretty formatting the input numbers **/
+webshims.setOptions('forms-ext', {
+    replaceUI: 'auto',
+    types: 'number'
+});
+
+webshims.polyfill('forms forms-ext');
+
 // Initial plot
 functionPlot(options);

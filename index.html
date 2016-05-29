@@ -37,7 +37,9 @@
     <div><svg id="heatmap_canvas"></svg></div>
     <div id="display_info"></div>
 
-    <div><div id="toggle_wrapper"><input id="toggle-one" checked type="checkbox" data-onstyle="default"></div></div>
+    <div><div id="toggle_wrapper">
+      <label for="toggle-one">Click to toggle: </label>
+      <input id="toggle-one" checked type="checkbox" data-onstyle="default"></div></div>
     <script>
       $(function() {
         $('#toggle-one').bootstrapToggle({
