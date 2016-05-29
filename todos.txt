@@ -1,0 +1,22 @@
+** Middle East data (including originated from ME INT_ANY)
+** Year adjustable: slider bar (92~2014)
+
+* Type of visualization we want to offer
+[maybe] - Doubtful cases & alternative designation
+- Ransom paid and Kidnapping / Hostage outcome
+- X terrorist groups selected, aggregate attack information (attack type) view created
+
+* Stretch: Related incidents (part of multiple incident)
+
+* What details (once selected) we want to offer
+
+[Terrorist group drill down]
+- weapon information
+- target information over time (categories)
+- mode of claiming responsibility over time
+- suicide attack over time
+- include intention visualization (annotation)
+
+TODOS:
+- Ella —> Excel to JSON + data clean up / each terrorist group
+- Leah -> Story board + Tableau

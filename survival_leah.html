@@ -24,14 +24,60 @@
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
-
   </head>
+  
   <body>
     <h1>Kidnapping probability</h1>
-    <div><svg id="hooman"></svg></div>
-    <div>
-    	<p>Asked: </p><input type="range" min="0" id="money_asked"><br>
-    	<p>Paid: </p><input type="range" min="0" id="money_paid">
+    <div><svg id="circle1" height="100" width="100">
+        <circle cx="50" cy="50" r="50"/></svg>
+        <svg id="circle2" height="100" width="100">
+        <circle cx="50" cy="50" r="50"/></svg>
+        <svg id="circle3" height="100" width="100">
+        <circle cx="50" cy="50" r="50"/></svg>
     </div>
+    <div>
+    	<p>Asked: </p><input type="range" min="0" max="100" step="1" id="money_asked" value="50"><br>
+    	<p>Paid: </p><input type="range" min="0" max="100" step="1" id="money_paid" value="30">
+    </div>
+
+    <script> //For some reason the javascript file doesnt work
+    asked = 50; // default
+    paid = 30; // default
+function update() {
+    probability = paid / asked;
+    if (probability > 0.3) {
+        console.log("circle 1 color change");
+        d3.select("#circle1").style("fill", "blue");
+    }
+
+    if (probability > 0.6) {
+        console.log("circle 2 color change");
+        d3.select("#circle2").style("fill", "red");
+    } 
+
+}
+
+function asked_update(value) {
+    asked = value;
+    update();
+}
+
+function paid_update(value) {
+    paid = value;
+    update();
+}
+
+function init() {
+    d3.select("#money_asked").on("input", function() {
+        asked_update(this.value);
+    });
+
+    d3.select("#money_paid").on("input", function() {
+        paid_update(this.value);
+    });
+}
+
+init();
+    </script>
   </body>
 </html>
