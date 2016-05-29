@@ -17,7 +17,7 @@ var TYPE_COLOR = {"Government": "#1f77b4", "Civilians & Properties":"#ff7f0e", "
     "Military / Police": "#ff9896", "Journalists & Media": "#9467bd",
     "Educational Institution": "#8c564b", "NGO": "#e377c2",
     "Religious Figures": "#bcbd22", "Transit & Infra": "#17becf", "Other": "#bcbddc"};
-var HEAT_COLORS = ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#b00026', '#87001D'];
+var HEAT_COLORS = ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026', '#4d0017'];
 
 var DEAD_COLOR = "#bfbfbf";
 
@@ -32,7 +32,7 @@ var HIGH_CUTOFF = 1000;
 var NUMCOL = 20, NUMROW = 5;
 var NUMFIGS = 100;
 var CANVAS_W = 1000, CANVAS_H = 450;
-var SLIDER_W = CANVAS_W + 60, SLIDER_H = 60;
+var SLIDER_W = CANVAS_W, SLIDER_H = 80;
 
 /** GLOBAL VARIABLES **/
 var mode = "region";
@@ -50,22 +50,15 @@ var legend_tip = d3.tip()
         }
     );
 
-/** TOY DATA for basic build step **/
-var raw_data = [{"year": 1970, "data": {
-                            "incident_count": {"total": 16, "region": {"North America": 6, "Western Europe": 5, "Eastern Europe & Central Asia":5},
-                                "type": {"Government": 12, "Civilians & Properties": 4}},
-                            "kidnapped": {"total": 200, "region": {"North America": 100, "Western Europe": 60, "Eastern Europe & Central Asia":40},
-                                "type": {"Government": 180, "Civilians & Properties": 20}},
-                            "killed": {"total": 20, "region": {"North America": 10, "Western Europe": 10, "Eastern Europe & Central Asia":0},
-                                "type": {"Government": 15, "Civilians & Properties": 5}}
-            }}, {"year": 1971, "data":
-    {"incident_count": {"total": 120, "region": {}, "type": {}},
-    "kidnapped": {"total": 300, "region": {"North America": 100, "Western Europe": 160, "Eastern Europe & Central Asia":40},
-        "type": {"Government": 180, "Civilians & Properties": 120}},
-    "killed": {"total": 90, "region": {"North America": 20, "Western Europe": 60, "Eastern Europe & Central Asia":10},
-        "type": {"Government": 10, "Civilians & Properties": 80}}
-    }}];
+var raw_data = null;
 
+function load_data(data_fn, _callback) {
+    d3.json(data_fn, function(error, json_data) {
+        if (error) return console.warn(error);
+        raw_data = json_data;
+        _callback();
+    });
+}
 
 function set_width_height(num_incidents) {
     if (num_incidents < MEDIUM_CUTOFF) {
@@ -85,17 +78,20 @@ function set_year_data() {
             return;
         }
     }
-
     console.log("Error! No data found for year: " + year_selected);
 }
 
+function toggle_type(is_region) {
+    mode = is_region ? "region" : "type";
+}
 
-function draw_rectangle(group) {
+function draw_rectangle() {
+    var group = d3.select("#figGroup");
     var data = selected_data;
-    d3.select("#display_info").html("Year: " + year_selected + "<br/> From "
-        + data.incident_count.total + " incidents: "
-        + data.kidnapped.total + " kidnapped, "
-        + data.killed.total + " killed.");
+    d3.select("#display_info").html("In " + year_selected + ", there were "
+        + data.incident_count.total + " incidents. "
+        + data.kidnapped.total + " were kidnapped, "
+        + data.killed.total + " were killed.");
     set_width_height(data.incident_count.total);
     data = transform_data(data);
 
@@ -104,13 +100,14 @@ function draw_rectangle(group) {
 
     figures.attr("class", function(d) { return d.legend; })
         .attr("class", "fig")
-        .transition().duration(750)
+        .attr("fill", function(d) { return d.color; })
+        .transition().duration(500)
         .attr("x", function(d) { return d.i * (fig_w + margin); })
         .attr("y", function(d) { return d.j * (fig_h + margin); })
+        .attr("transform", "translate (1, 1)")
         .attr("width", fig_w)
         .attr("height", fig_h)
         .style("stroke", function(d) { return d.bordercolor; })
-        .attr("fill", function(d) { return d.color; })
         .style("stroke-width", "2px");
 
     figures.enter().append("rect")
@@ -118,6 +115,7 @@ function draw_rectangle(group) {
         .attr("class", "fig")
         .attr("x", function(d) { return d.i * (fig_w + margin); })
         .attr("y", function(d) { return d.j * (fig_h + margin); })
+        .attr("transform", "translate (1, 1)")
         .attr("width", fig_w)
         .attr("height", fig_h)
         .style("stroke", function(d) { return d.bordercolor; })
@@ -125,12 +123,29 @@ function draw_rectangle(group) {
         .style("stroke-width", "2px");
 
     figures.exit()
-        .transition()
-        .duration(750)
         .style("fill-opacity", 1e-6)
         .remove();
 }
 
+function sum_values(tdarray) {
+    var total = 0;
+    for (var i = 0; i < tdarray.length; i++) {
+        total += tdarray[i][1];
+    }
+    return total;
+}
+
+function fill_gaps(estimate, standard) {
+    var sum = sum_values(estimate);
+    var diff = standard - sum;
+    var index = 0;
+    while (diff > 0) {
+        estimate[index % estimate.length][1] += 1;
+        diff -= 1;
+        index += 1;
+    }
+    return estimate;
+}
 
 function transform_data(data) {
     // 1. Compute the total number of dead folks
@@ -143,18 +158,25 @@ function transform_data(data) {
     var class_total = (mode == "region") ? data.kidnapped.region : data.kidnapped.type;
     var class_color = (mode == "region") ? REGION_COLOR : TYPE_COLOR;
     var total_dead = Math.round(NUMFIGS * data.killed.total / global_kidnap_total);
+    var total_live = NUMFIGS - total_dead;
     var live_per_class = [];
     var death_per_class = [];
 
+
     for (var key in class_kill) {
-        var key_alive = Math.round(NUMFIGS * (class_total[key] - class_kill[key]) / global_kidnap_total);
         var key_dead = Math.round(NUMFIGS * class_kill[key] / global_kidnap_total);
+        var key_alive = Math.round(NUMFIGS * class_total[key] / global_kidnap_total) - key_dead;
+
         live_per_class.push([ key , key_alive]);
         death_per_class.push([ key, key_dead]);
     }
 
     live_per_class.sort(function(a, b) { return b[1] - a[1]; });
     death_per_class.sort(function(a, b) { return b[1] - a[1]; });
+
+    live_per_class = fill_gaps(live_per_class, total_live);
+    death_per_class = fill_gaps(death_per_class, total_dead);
+
     var i = 0, j = 0, n = 0, k = 0;
     while (i < NUMCOL) {
         while (j < NUMROW) {
@@ -165,8 +187,8 @@ function transform_data(data) {
                     if (death_per_class[n][1] < 1) {
                         n++;
                     }
-                    total_dead -= 1;
                 }
+                total_dead -= 1;
             } else {
                 if (k < live_per_class.length && live_per_class[k][1] > 0) {
                     live_per_class[k][1] -= 1;
@@ -203,31 +225,96 @@ function get_heatmap_data() {
 
 function draw_heatmap() {
     var data = get_heatmap_data();
+
     var svg = d3.select("#heatmap_canvas").attr("width", SLIDER_W).attr("height", SLIDER_H);
     var labelGroup = svg.append("g").attr("id", "labelGroup");
+    var barGroup = svg.append("g").attr("id", "barGroup");
 
-    // TODO: finish implementing heatmap drawing and labeling / legending.
-
-    var rect_w = Math.floor(SLIDER_W / 44) - 2, rect_h = rect_w;
+    var rect_w = Math.floor(SLIDER_W / data.length), rect_h = rect_w;
     var legend_w = SLIDER_W / HEAT_COLORS.length;
 
-    for (var i = 0 ; i < data.length; i++) {
+    labelGroup.selectAll().data(data)
+        .enter()
+        .append("text")
+        .text(function(d) { return (d.year % 100); })
+        .attr("x", function(d, i) { return i * rect_w; })
+        .attr("y", 0)
+        .attr("dx", "1.3em")
+        .attr("dy", "1em")
+        .attr("font-size", "8px")
+        .attr("class", "heatmap_label")
+        .style("text-anchor", "middle")
+        .style("fill", "#808080");
 
-    }
+    var colorScale = d3.scale.quantile()
+        .domain([0, d3.max(data, function (d) { return d.rate; })])
+        .range(HEAT_COLORS);
+
+    var cards = barGroup.selectAll("rect").data(data);
+
+    cards.enter()
+        .append("rect")
+        .attr("class", "heatmap")
+        .attr("x", function(d, i) { return i * rect_w; })
+        .attr("y", 10)
+        .attr("rx", 3)
+        .attr("ry", 3)
+        .attr("width", rect_w)
+        .attr("height", rect_h)
+        .style("fill", function(d) { return colorScale(d.rate); })
+        .on('mouseover', function(d) {
+            d3.select(this)
+                .attr("height", rect_h * 1.4);
+            year_selected = d.year;
+            set_year_data();
+            update_legtip();
+            var throttled_function = _.throttle(draw_rectangle, 100)
+            throttled_function();
+        })
+        .on("mouseout", function(d) {
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr("width", rect_w)
+                .attr("height", rect_h);
+        });
+
+    cards.exit().remove();
+
+    var blGroup = svg.append("g").attr("id", "blGroup");
+
+
+    var legend = blGroup.selectAll(".bar_legend")
+        .data([0].concat(colorScale.quantiles()), function(d) { return d; });
+
+    legend.enter()
+        .append("g")
+        .attr("class", "bar_legend")
+        .each(function (d, i) {
+            var g = d3.select(this);
+            g.append("rect")
+                .attr("x", legend_w * i)
+                .attr("y", rect_h + 25)
+                .attr("width", legend_w)
+                .attr("height", rect_h / 2)
+                .style("fill", HEAT_COLORS[i]);
+
+            g.append("text")
+                .attr("class", "mono")
+                .text(function(d) {
+                    if (d == 0) {
+                        return "death rate ≥ " + d.toFixed(0);
+                    } else {
+                        return "≥ " + d.toFixed(2);
+                    }
+                })
+                .attr("x", legend_w * i)
+                .attr("y", rect_h + 45);
+        });
+
+    legend.exit().remove();
 }
 
-/*
- updated_legend.enter()
- .append("g")
- .each(function(d, i) {
- var g = d3.select(this);
- g.append("rect")
- .attr("x", (Math.floor(i / 2)) * 210)
- .attr("y", (i % 2) * 25)
- .attr("width", 15)
- .attr("height", 15)
- .style("fill", d.color);
- })*/
 
 
 function draw_timeline() {
@@ -238,7 +325,7 @@ function draw_timeline() {
     var fig_group = svg.append("g").attr("id", "figGroup");
 
     create_legend();
-    draw_rectangle(fig_group);
+    draw_rectangle();
 }
 
 
@@ -265,9 +352,11 @@ function get_legend_data() {
 }
 
 
-function create_legend() {
+function update_legtip() {
     var legend_data = get_legend_data();
-    legend_data.sort(function(a, b) { return a.order - b.order; });
+    legend_data.sort(function (a, b) {
+        return a.order - b.order;
+    });
 
     var legend = d3.select("#legend")
         .attr("x", 65)
@@ -275,43 +364,50 @@ function create_legend() {
         .attr("height", 50)
         .attr("width", CANVAS_W + 100);
 
+    var legend_item = legend.selectAll(".legend_item").data(legend_data);
+
     legend.call(legend_tip);
 
-    var updated_legend = legend.selectAll("g").data(legend_data);
+    return legend_item;
+}
 
-    updated_legend.each(function(d, i) {
-            var g = d3.select(this);
-            g.append("rect")
-                .attr("x", (Math.floor(i / 2)) * 170)
-                .attr("y", (i % 2) * 25)
-                .attr("width", 15)
-                .attr("height", 15)
-                .style("fill", d.color);
+function create_legend() {
+    var legend_item = update_legtip();
 
-            g.append("text")
-                .attr("x", (Math.floor(i / 2)) * 170 + 20)
-                .attr("y", (i % 2) * 25 + 12)
-                .attr("width", 90)
-                .attr("height", 30)
-                .text(d.name)
-                .attr("font-size", "11pt")
-                .attr("font-family", "sans-serif")
-                .style("fill", d.color);
-        });
+    legend_item.each(function(d, i) {
+        var g = d3.select(this);
+        g.select("rect")
+            .attr("x", (Math.floor(i / 2)) * 215)
+            .attr("y", (i % 2) * 25)
+            .attr("width", 15)
+            .attr("height", 15)
+            .style("fill", d.color);
 
-    updated_legend.enter()
+        g.select("text")
+            .attr("x", (Math.floor(i / 2)) * 215 + 20)
+            .attr("y", (i % 2) * 25 + 12)
+            .attr("width", 90)
+            .attr("height", 30)
+            .text(d.name)
+            .attr("font-size", "11pt")
+            .attr("font-family", "sans-serif")
+            .style("fill", d.color);
+    });
+
+    legend_item.enter()
         .append("g")
-        .each(function(d, i) {
+        .attr("class", "legend_item")
+        .each(function (d, i) {
             var g = d3.select(this);
             g.append("rect")
-                .attr("x", (Math.floor(i / 2)) * 210)
+                .attr("x", (Math.floor(i / 2)) * 215)
                 .attr("y", (i % 2) * 25)
                 .attr("width", 15)
                 .attr("height", 15)
                 .style("fill", d.color);
 
             g.append("text")
-                .attr("x", (Math.floor(i / 2)) * 210 + 20)
+                .attr("x", (Math.floor(i / 2)) * 215 + 20)
                 .attr("y", (i % 2) * 25 + 12)
                 .attr("width", 90)
                 .attr("height", 30)
@@ -323,9 +419,9 @@ function create_legend() {
         .on('mouseover', legend_tip.show)
         .on('mouseout', legend_tip.hide);
 
-    updated_legend.exit().remove();
+    legend_item.exit().remove();
 }
 
 
 
-draw_timeline();
+load_data("Data/kidnap_year_summary.json", draw_timeline);
