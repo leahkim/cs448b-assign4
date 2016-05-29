@@ -62,6 +62,21 @@ $(document).ready(function() {
             update_Plot(portion);
         }
     });
+
+    var handles = document.getElementsByClassName("ui-slider-handle");
+    var i = 0;
+    Array.prototype.forEach.call(handles, function(el) {
+        // Do stuff here
+        if (i == 0) {
+            el.id = "demand_handle";
+            el.style.background = "red";
+            i++;
+        }
+        else {
+            el.id = "pay_handle"
+            el.style.background = "blue";
+        }
+    });
 });
 
 // Initial plot
