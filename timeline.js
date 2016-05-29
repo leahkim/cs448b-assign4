@@ -44,29 +44,21 @@ var legend_tip = d3.tip()
     .attr('class', 'legend-tip')
     .offset([-10, 0])
     .html(function(d) {
-            console.log(d);
             return (d.name + "<br/> <strong>Total incidents:</strong> <span style='color:red'>" + d.incident_count + "</span>" + '<br/>'
             + "<strong>Total kidnapped:</strong> <span style='color:red'>" + d.total_kid + "</span>" + '<br/>'
             + "<strong>Total killed:</strong> <span style='color:red'>" + d.total_kill + "</span>");
         }
     );
 
-/** TOY DATA for basic build step **/
-var raw_data = [{"year": 1970, "data": {
-                            "incident_count": {"total": 16, "region": {"North America": 6, "Western Europe": 5, "Eastern Europe & Central Asia":5},
-                                "type": {"Government": 12, "Civilians & Properties": 4}},
-                            "kidnapped": {"total": 200, "region": {"North America": 100, "Western Europe": 60, "Eastern Europe & Central Asia":40},
-                                "type": {"Government": 180, "Civilians & Properties": 20}},
-                            "killed": {"total": 20, "region": {"North America": 10, "Western Europe": 10, "Eastern Europe & Central Asia":0},
-                                "type": {"Government": 15, "Civilians & Properties": 5}}
-            }}, {"year": 1971, "data":
-    {"incident_count": {"total": 120, "region": {}, "type": {}},
-    "kidnapped": {"total": 300, "region": {"North America": 100, "Western Europe": 160, "Eastern Europe & Central Asia":40},
-        "type": {"Government": 180, "Civilians & Properties": 120}},
-    "killed": {"total": 90, "region": {"North America": 20, "Western Europe": 60, "Eastern Europe & Central Asia":10},
-        "type": {"Government": 10, "Civilians & Properties": 80}}
-    }}];
+var raw_data = null;
 
+function load_data(data_fn, _callback) {
+    d3.json(data_fn, function(error, json_data) {
+        if (error) return console.warn(error);
+        raw_data = json_data;
+        _callback();
+    });
+}
 
 function set_width_height(num_incidents) {
     if (num_incidents < MEDIUM_CUTOFF) {
@@ -86,7 +78,6 @@ function set_year_data() {
             return;
         }
     }
-
     console.log("Error! No data found for year: " + year_selected);
 }
 
@@ -109,14 +100,14 @@ function draw_rectangle() {
 
     figures.attr("class", function(d) { return d.legend; })
         .attr("class", "fig")
-        .transition().duration(750)
+        .attr("fill", function(d) { return d.color; })
+        .transition().duration(500)
         .attr("x", function(d) { return d.i * (fig_w + margin); })
         .attr("y", function(d) { return d.j * (fig_h + margin); })
         .attr("transform", "translate (1, 1)")
         .attr("width", fig_w)
         .attr("height", fig_h)
         .style("stroke", function(d) { return d.bordercolor; })
-        .attr("fill", function(d) { return d.color; })
         .style("stroke-width", "2px");
 
     figures.enter().append("rect")
@@ -132,12 +123,29 @@ function draw_rectangle() {
         .style("stroke-width", "2px");
 
     figures.exit()
-        .transition()
-        .duration(750)
         .style("fill-opacity", 1e-6)
         .remove();
 }
 
+function sum_values(tdarray) {
+    var total = 0;
+    for (var i = 0; i < tdarray.length; i++) {
+        total += tdarray[i][1];
+    }
+    return total;
+}
+
+function fill_gaps(estimate, standard) {
+    var sum = sum_values(estimate);
+    var diff = standard - sum;
+    var index = 0;
+    while (diff > 0) {
+        estimate[index % estimate.length][1] += 1;
+        diff -= 1;
+        index += 1;
+    }
+    return estimate;
+}
 
 function transform_data(data) {
     // 1. Compute the total number of dead folks
@@ -150,18 +158,25 @@ function transform_data(data) {
     var class_total = (mode == "region") ? data.kidnapped.region : data.kidnapped.type;
     var class_color = (mode == "region") ? REGION_COLOR : TYPE_COLOR;
     var total_dead = Math.round(NUMFIGS * data.killed.total / global_kidnap_total);
+    var total_live = NUMFIGS - total_dead;
     var live_per_class = [];
     var death_per_class = [];
 
+
     for (var key in class_kill) {
-        var key_alive = Math.round(NUMFIGS * (class_total[key] - class_kill[key]) / global_kidnap_total);
         var key_dead = Math.round(NUMFIGS * class_kill[key] / global_kidnap_total);
+        var key_alive = Math.round(NUMFIGS * class_total[key] / global_kidnap_total) - key_dead;
+
         live_per_class.push([ key , key_alive]);
         death_per_class.push([ key, key_dead]);
     }
 
     live_per_class.sort(function(a, b) { return b[1] - a[1]; });
     death_per_class.sort(function(a, b) { return b[1] - a[1]; });
+
+    live_per_class = fill_gaps(live_per_class, total_live);
+    death_per_class = fill_gaps(death_per_class, total_dead);
+
     var i = 0, j = 0, n = 0, k = 0;
     while (i < NUMCOL) {
         while (j < NUMROW) {
@@ -172,8 +187,8 @@ function transform_data(data) {
                     if (death_per_class[n][1] < 1) {
                         n++;
                     }
-                    total_dead -= 1;
                 }
+                total_dead -= 1;
             } else {
                 if (k < live_per_class.length && live_per_class[k][1] > 0) {
                     live_per_class[k][1] -= 1;
@@ -211,16 +226,11 @@ function get_heatmap_data() {
 function draw_heatmap() {
     var data = get_heatmap_data();
 
-    // LINE FOR TESTING!
-    data = [{'year': 1970, "rate": 0.0}, {'year': 1971, "rate": 0.1}, {'year': 1972, "rate": 0.200001}, {'year': 1973, "rate": 0.30001},
-        {'year': 1974, "rate": 0.400001}, {'year': 1975, "rate": 0.500001}, {'year': 1976, "rate": 0.60001}, {'year': 1977, "rate": 0.70001},
-        {'year': 1978, "rate": 0.80001}, {'year': 1979, "rate": 0.90}, {'year': 1980, "rate": 1.0}];
-
     var svg = d3.select("#heatmap_canvas").attr("width", SLIDER_W).attr("height", SLIDER_H);
     var labelGroup = svg.append("g").attr("id", "labelGroup");
     var barGroup = svg.append("g").attr("id", "barGroup");
 
-    var rect_w = Math.floor(SLIDER_W / 44) - 2, rect_h = rect_w;
+    var rect_w = Math.floor(SLIDER_W / data.length), rect_h = rect_w;
     var legend_w = SLIDER_W / HEAT_COLORS.length;
 
     labelGroup.selectAll().data(data)
@@ -236,11 +246,9 @@ function draw_heatmap() {
         .style("text-anchor", "middle")
         .style("fill", "#808080");
 
-    var colorScale = d3.scale.quantize()
-        .domain([0, 1])
+    var colorScale = d3.scale.quantile()
+        .domain([0, d3.max(data, function (d) { return d.rate; })])
         .range(HEAT_COLORS);
-
-    console.log(colorScale);
 
     var cards = barGroup.selectAll("rect").data(data);
 
@@ -260,8 +268,8 @@ function draw_heatmap() {
             year_selected = d.year;
             set_year_data();
             update_legtip();
-
-            draw_rectangle();
+            var throttled_function = _.throttle(draw_rectangle, 100)
+            throttled_function();
         })
         .on("mouseout", function(d) {
             d3.select(this)
@@ -275,21 +283,15 @@ function draw_heatmap() {
 
     var blGroup = svg.append("g").attr("id", "blGroup");
 
-    var quantize_cutoff = []
-    for (var i = 0; i < HEAT_COLORS.length; i++) {
-        var cutoff = i/HEAT_COLORS.length;
-        quantize_cutoff.push(cutoff);
-    }
 
     var legend = blGroup.selectAll(".bar_legend")
-        .data(quantize_cutoff);
+        .data([0].concat(colorScale.quantiles()), function(d) { return d; });
 
     legend.enter()
         .append("g")
         .attr("class", "bar_legend")
         .each(function (d, i) {
             var g = d3.select(this);
-            console.log(d);
             g.append("rect")
                 .attr("x", legend_w * i)
                 .attr("y", rect_h + 25)
@@ -422,4 +424,4 @@ function create_legend() {
 
 
 
-draw_timeline();
+load_data("Data/kidnap_year_summary.json", draw_timeline);

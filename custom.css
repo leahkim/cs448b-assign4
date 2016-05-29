@@ -4,7 +4,7 @@ body {
     width: 1000px;
 }
 
-h1 {
+h1, h2 {
     text-align: center;
 }
 
@@ -46,4 +46,25 @@ text.mono {
     font-size: 8pt;
     font-family: Consolas, courier;
     fill: #aaa;
+}
+
+#legend {
+    margin: 20px 5px;
+}
+
+#survival_graph {
+    text-align:center;
+}
+
+text.title {
+    font-size: 18px;
+}
+
+.annotations path{
+    stroke: #ffbb99;
+    stroke-dasharray: 5,5;
+}
+
+.annotations text {
+    fill: #737373;
 }
