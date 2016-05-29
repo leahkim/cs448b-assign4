@@ -68,3 +68,23 @@ text.title {
 .annotations text {
     fill: #737373;
 }
+
+.input-box {
+    width: 100%;
+    margin: 40px 0px 20px 0px;
+    text-align: center;
+}
+
+.input-surround {
+    width: 30%;
+    display: inline-block;
+}
+
+.input-group-addon {
+    width: auto;
+}
+
+#slider {
+    width: 100%;
+    margin: 10px 0px 40px 10px;
+}
