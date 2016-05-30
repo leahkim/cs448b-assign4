@@ -29,25 +29,26 @@
 
   </head>
   
-  <body>
+  <br>
     <h2>Survival Rate as a Function of Ransom Paid</h2>
     <div class="input-box">
         <div class="input-surround">
             <div class="input-group">
-                <span class="input-group-addon">Demanded $</span>
+                <span class="input-group-addon" style="color:red;">Demanded $</span>
                 <input type="number" id="demanded" class="sliderValue form-control currency" data-index="0" value="1000000" min="0" step="1000" data-number-to-fixed="2" data-number-stepfactor="1000" />
             </div>
         </div>
 
         <div class="input-surround">
             <div class="input-group">
-                <span class="input-group-addon">Paid $</span>
+                <span class="input-group-addon" style="color:blue;">Paid $</span>
                 <input type="number" id="paid" class="sliderValue form-control currency" data-index="1"  value="40000" min="0" step="1000" data-number-to-fixed="2" data-number-stepfactor="1000" />
             </div>
         </div>
     </div>
 
     <div id="slider"></div>
+    <div id="help_text">How many people (out of 100) are surviving?</div>
     <br>
     <svg id="timeline_canvas"></svg>
     <script src="survival_human.js"></script>

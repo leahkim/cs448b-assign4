@@ -94,6 +94,9 @@ input.currency {
     padding-right: 15px;
 }
 
+#help_text {
+    margin: 0px 0px 5px 10px;
+}
 
 #toggle_label {
     color: #8c8c8c;
