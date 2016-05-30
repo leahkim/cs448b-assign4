@@ -14,7 +14,7 @@ function update_Plot(value) {
     selected_y = predict(selected_x);
     num_survived = Math.round(selected_y * 10);
     for (var i = 0; i < 10; i++) {
-        if (i < num_survived) d3.select("#human" + i).attr("fill", "black");
+        if (i < num_survived) d3.select("#human" + i).attr("fill", "none").attr("stroke","#000000");
         else d3.select("#human" + i).attr("fill", "red");
     }
 }
@@ -57,3 +57,4 @@ webshims.setOptions('forms-ext', {
 });
 
 webshims.polyfill('forms forms-ext');
+update_Plot(selected_x);
