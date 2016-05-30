@@ -14,7 +14,7 @@ h1, h2 {
     border-style: solid;
     border-width: 1px;
     border-radius: 3px;
-    border-color: #bfbfbf;
+    border-color: #e6e6e6;
 }
 
 
@@ -92,4 +92,8 @@ text.title {
 input.currency {
     text-align: right;
     padding-right: 15px;
+}
+
+#toggle_label {
+    color: #8c8c8c;
 }

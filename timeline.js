@@ -21,12 +21,8 @@ var HEAT_COLORS = ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e
 
 var DEAD_COLOR = "#bfbfbf";
 
-var FIG_WL = 10, FIG_HL = 20;
-var FIG_WM = 15, FIG_HM = 30;
-var FIG_WH = 40, FIG_HH = 80;
-
-var MEDIUM_CUTOFF = 100;
-var HIGH_CUTOFF = 1000;
+var FIG_MINW = 10, FIG_MINH = 20;
+var FIG_MAXW = 40, FIG_MAXH = 80;
 
 // Configuration for drawings of timeline
 var NUMCOL = 20, NUMROW = 5;
@@ -38,7 +34,7 @@ var SLIDER_W = CANVAS_W, SLIDER_H = 80;
 var mode = "region";
 var year_selected = 1970;
 var selected_data = [];
-var fig_w = FIG_WL, fig_h = FIG_HL; // default values
+var fig_w = FIG_MINW, fig_h = FIG_MINH; // default values
 
 var legend_tip = d3.tip()
     .attr('class', 'legend-tip')
@@ -50,7 +46,29 @@ var legend_tip = d3.tip()
         }
     );
 
-var raw_data = null;
+var widthScale = null;
+var heightScale = null;
+
+function set_scales() {
+    var kidnap_vals = [];
+    if (raw_data == null) {
+        console.log("You're trying to access empty data set.");
+    } else {
+        for (var i in raw_data) {
+            kidnap_vals.push(raw_data[i].data.kidnapped.total);
+        }
+        var min = d3.min(kidnap_vals);
+        var max = d3.max(kidnap_vals);
+
+        widthScale = d3.scale.pow().exponent(.5)
+            .domain([min, max])
+            .range([FIG_MINW, FIG_MAXW]);
+
+        heightScale = d3.scale.pow().exponent(.5)
+            .domain([min, max])
+            .range([FIG_MINH,FIG_MAXH]);
+    }
+}
 
 function load_data(data_fn, _callback) {
     d3.json(data_fn, function(error, json_data) {
@@ -60,15 +78,8 @@ function load_data(data_fn, _callback) {
     });
 }
 
-function set_width_height(num_incidents) {
-    if (num_incidents < MEDIUM_CUTOFF) {
-        fig_w = FIG_WL, fig_h = FIG_HL;
-    } else if (num_incidents < HIGH_CUTOFF) {
-        fig_w = Math.round(FIG_WM + (FIG_WH - FIG_WM) * (num_incidents - MEDIUM_CUTOFF) / (HIGH_CUTOFF - MEDIUM_CUTOFF));
-        fig_h = Math.round(FIG_HM + (FIG_HH - FIG_HM) * (num_incidents - MEDIUM_CUTOFF) / (HIGH_CUTOFF - MEDIUM_CUTOFF));
-    } else {
-        fig_w = FIG_WH, fig_h = FIG_HH;
-    }
+function set_width_height(num_kidnapped) {
+    fig_w = widthScale(num_kidnapped), fig_h = heightScale(num_kidnapped);
 }
 
 function set_year_data() {
@@ -92,7 +103,7 @@ function draw_rectangle() {
         + data.incident_count.total + " incidents. "
         + data.kidnapped.total + " were kidnapped, "
         + data.killed.total + " were killed.");
-    set_width_height(data.incident_count.total);
+    set_width_height(data.kidnapped.total);
     data = transform_data(data);
 
     var margin = 3;
@@ -317,8 +328,48 @@ function draw_heatmap() {
 
 
 
+function draw_size_scale() {
+    var legend_height = "20px";
+    var svgContainer = d3.select("#count_legend").attr("width", CANVAS_W).attr("height", legend_height);
+    var tickGroup = [10, 50, 100, 500, 1000, 5000, 10000];
+    var startPt = 8;
+    var yTop = 4, yBottom = yTop + 8, yMid = yTop + (yBottom - yTop) / 2;
+
+    var horizontal = svgContainer.append("line")
+        .attr("x1", startPt).attr("y1", yMid)
+        .attr("x2", CANVAS_W).attr("y2", yMid)
+        .attr("stroke-width", 1)
+        .attr("stroke", "#808080");
+
+    svgContainer.append("text")
+        .text("Number of people kidnapped: ")
+        .attr("x", startPt)
+        .attr("y", yBottom + 7)
+        .attr("font-size", "7pt")
+        .attr("fill", "#808080");
+
+    for (var i in tickGroup) {
+        var width = (widthScale(tickGroup[i]) + 3) * 20;
+        svgContainer.append("line")
+            .attr("x1", startPt + width).attr("y1", yTop)
+            .attr("x2", startPt + width).attr("y2", yBottom)
+            .attr("stroke-width", 1)
+            .attr("stroke", "#808080");
+
+        svgContainer.append("text")
+            .text(tickGroup[i])
+            .attr("x", startPt + width - 6)
+            .attr("y", yBottom + 8)
+            .attr("font-size", "7pt")
+            .attr("fill", "#808080");
+    }
+}
+
 function draw_timeline() {
+    set_scales();
     set_year_data();
+
+    draw_size_scale();
     draw_heatmap();
 
     var svg = d3.select("#timeline_canvas").attr("width", CANVAS_W).attr("height", CANVAS_H);
