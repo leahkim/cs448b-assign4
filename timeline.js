@@ -21,7 +21,7 @@ var HEAT_COLORS = ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e
 
 var DEAD_COLOR = "#bfbfbf";
 
-var FIG_MINW = 10, FIG_MINH = 20;
+var FIG_MINW = 15, FIG_MINH = 30;
 var FIG_MAXW = 40, FIG_MAXH = 80;
 
 // Configuration for drawings of timeline
@@ -96,6 +96,8 @@ function toggle_type(is_region) {
     mode = is_region ? "region" : "type";
 }
 
+
+
 function draw_rectangle() {
     var group = d3.select("#figGroup");
     var data = selected_data;
@@ -109,7 +111,34 @@ function draw_rectangle() {
     var margin = 3;
     var figures = group.selectAll(".fig").data(data);
 
-    figures.attr("class", function(d) { return d.legend; })
+    figures.each(function() {
+       console.log("ha!");
+    });
+
+    figures.enter()
+        .append("g")
+        .attr("x", function(d) { return d.i * (fig_w + margin); })
+        .attr("y", function(d) { return d.j * (fig_h + margin); })
+        .attr("transform", "translate (1, 1)")
+        .attr("width", fig_w)
+        .attr("height", fig_h)
+        .attr("id", function(d) { return "fig_" + d.i + "_" + d.j;})
+        .each(function(d) {
+            var id = "fig_" + d.i + "_" + d.j;
+            d3.xml("human.svg", "image/svg+xml", function(xml) {
+                document.getElementById(id).appendChild(xml.documentElement);
+                console.log("Adding new!");
+            });
+    });
+    /*
+    figures
+        .attr("xlink:href",function(d) {
+            if(d.legend == "killed") {
+                return "dead_human.svg";
+            } else {
+                return "human.svg";
+            }})
+        .attr("class", function(d) { return d.legend; })
         .attr("class", "fig")
         .attr("fill", function(d) { return d.color; })
         .transition().duration(500)
@@ -121,7 +150,13 @@ function draw_rectangle() {
         .style("stroke", function(d) { return d.bordercolor; })
         .style("stroke-width", "2px");
 
-    figures.enter().append("rect")
+    figures.enter().append("image")
+        .attr("xlink:href",function(d) {
+            if(d.legend == "killed") {
+                return "dead_human.svg";
+            } else {
+                return "human.svg";
+            }})
         .attr("class", function(d) { return d.legend; })
         .attr("class", "fig")
         .attr("x", function(d) { return d.i * (fig_w + margin); })
@@ -130,8 +165,9 @@ function draw_rectangle() {
         .attr("width", fig_w)
         .attr("height", fig_h)
         .style("stroke", function(d) { return d.bordercolor; })
-        .attr("fill", function(d) { return d.color; })
+        .style("fill", function(d) { return d.color; })
         .style("stroke-width", "2px");
+    */
 
     figures.exit()
         .style("fill-opacity", 1e-6)

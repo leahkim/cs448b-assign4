@@ -2,27 +2,96 @@ var INIT_DEMAND = 1000000;
 var INIT_PAID = 40000;
 var selected_x = INIT_PAID / INIT_DEMAND;
 var selected_y = predict(selected_x);
-var x_text = selected_x < 0.1 ? '' : '% paid = ' + selected_x.toFixed(2);
-var y_text = 'rate = ' + selected_y.toFixed(2);
+var NUM_FIG = 100;
+var NUMCOL = 20;
+var NUMROW = 5;
+var CANVAS_W = 1000, CANVAS_H = 500;
+
+var fig_w = 40, fig_h = fig_w * 2;
 
 function predict(x) {
     return 1/(1 + Math.exp(-2.9854 * (x + 0.2892)));
 }
 
+
+function create_data_array(num_survival) {
+    // 1. Compute the total number of dead folks
+    // 2. Compute each type's live folks --> sort in order
+    // should return [{i, j, type}] for each point
+    var result = [];
+    var total_dead = NUM_FIG - num_survival;
+    var total_live = num_survival;
+    var i = 0, j = 0;
+    while (i < NUMCOL) {
+        while (j < NUMROW) {
+            if (total_dead > 0) {
+                result.push({"i": i, "j": j, "type": "killed"});
+                total_dead -= 1;
+            } else if (total_live > 0) {
+                result.push({"i": i, "j": j, "type": "live"});
+                total_live -= 1;
+            }
+            j++;
+        }
+        i++;
+        j = 0;
+    }
+
+    return result;
+}
+
 function update_Plot(value) {
     selected_x = value;
     selected_y = predict(selected_x);
-    num_survived = Math.round(selected_y * 10);
-    for (var i = 0; i < 10; i++) {
-        if (i < num_survived) d3.select("#human" + i).attr("fill", "none").attr("stroke","#000000");
-        else d3.select("#human" + i).attr("fill", "red");
-    }
+    var num_survived = Math.round(selected_y * NUM_FIG);
+    console.log("num_sur")
+
+    var group = d3.select("#figGroup");
+    var data = create_data_array(num_survived);
+
+    var margin = 3;
+    var figures = group.selectAll(".fig").data(data);
+
+     figures
+     .attr("xlink:href",function(d) {
+     if(d.type == "killed") {
+         return "dead_human_red.svg";
+         } else {
+         return "human.svg";
+     }})
+     .attr("class", "fig")
+     .transition().duration(500)
+     .attr("x", function(d) { return d.i * (fig_w + margin); })
+     .attr("y", function(d) { return d.j * (fig_h + margin); })
+     .attr("transform", "translate (1, 1)")
+     .attr("width", fig_w)
+     .attr("height", fig_h);
+
+    figures.enter().append("image")
+        .attr("xlink:href",function(d) {
+            if(d.type == "killed") {
+                return "dead_human_red.svg";
+            } else {
+                return "human.svg";
+            }})
+        .attr("class", "fig")
+        .transition().duration(500)
+        .attr("x", function(d) { return d.i * (fig_w + margin); })
+        .attr("y", function(d) { return d.j * (fig_h + margin); })
+        .attr("transform", "translate (1, 1)")
+        .attr("width", fig_w)
+        .attr("height", fig_h);
+
+    figures.exit()
+        .style("fill-opacity", 1e-6)
+        .remove();
 }
+
 
 $(document).ready(function() {
     $("#slider").slider({
         min: 0,
-        max: 1000000,
+        max: 1500000,
         step: 1000,
         values: [INIT_DEMAND, INIT_PAID],
         slide: function(event, ui) {
@@ -56,5 +125,10 @@ webshims.setOptions('forms-ext', {
     types: 'number'
 });
 
+
 webshims.polyfill('forms forms-ext');
+
+var svg = d3.select("#timeline_canvas").attr("width", CANVAS_W).attr("height", CANVAS_H);
+svg.append("g").attr("id", "figGroup");
+
 update_Plot(selected_x);

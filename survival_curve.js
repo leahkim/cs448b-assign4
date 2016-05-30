@@ -51,7 +51,7 @@ function update_Plot(value) {
 $(document).ready(function() {
     $("#slider").slider({
         min: 0,
-        max: 1000000,
+        max: 1500000,
         step: 1000,
         values: [INIT_DEMAND, INIT_PAID],
         slide: function(event, ui) {
