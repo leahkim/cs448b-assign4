@@ -17,7 +17,28 @@ var TYPE_COLOR = {"Government": "#1f77b4", "Civilians & Properties":"#ff7f0e", "
     "Military / Police": "#ff9896", "Journalists & Media": "#9467bd",
     "Educational Institution": "#8c564b", "NGO": "#e377c2",
     "Religious Figures": "#bcbd22", "Transit & Infra": "#17becf", "Other": "#bcbddc"};
+
 var HEAT_COLORS = ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026', '#4d0017'];
+
+var ALIVE_FIGURE_MAP = {"North America": "human_NA.svg", "Central & South America": "human_centralAm.svg",
+    "Western Europe": "human.svg", "Eastern Europe & Central Asia": "human.svg",
+    "Middle East & North Africa": "human.svg", "Sub-Saharan Africa": "human.svg",
+    "South Asia": "human.svg", "Southeast Asia": "human.svg",
+    "East Asia": "human.svg", "Oceania": "human.svg", "Government": "human.svg", "Civilians & Properties":"human.svg",
+    "Business": "human.svg",
+    "Military / Police": "human.svg", "Journalists & Media": "human.svg",
+    "Educational Institution": "human.svg", "NGO": "human.svg",
+    "Religious Figures": "human.svg", "Transit & Infra": "human.svg", "Other": "human.svg"};
+
+var DEAD_FIGURE_MAP = {"North America": "dead_human.svg", "Central & South America": "dead_human.svg",
+    "Western Europe": "dead_human.svg", "Eastern Europe & Central Asia": "dead_human.svg",
+    "Middle East & North Africa": "dead_human.svg", "Sub-Saharan Africa": "dead_human.svg",
+    "South Asia": "dead_human.svg", "Southeast Asia": "dead_human.svg",
+    "East Asia": "dead_human.svg", "Oceania": "dead_human.svg", "Government": "dead_human.svg",
+    "Civilians & Properties":"dead_human.svg", "Business": "dead_human.svg",
+    "Military / Police": "dead_human.svg", "Journalists & Media": "dead_human.svg",
+    "Educational Institution": "dead_human.svg", "NGO": "dead_human.svg",
+    "Religious Figures": "dead_human.svg", "Transit & Infra": "dead_human.svg", "Other": "dead_human.svg"};
 
 var DEAD_COLOR = "#bfbfbf";
 
@@ -111,33 +132,8 @@ function draw_rectangle() {
     var margin = 3;
     var figures = group.selectAll(".fig").data(data);
 
-    figures.each(function() {
-       console.log("ha!");
-    });
-
-    figures.enter()
-        .append("g")
-        .attr("x", function(d) { return d.i * (fig_w + margin); })
-        .attr("y", function(d) { return d.j * (fig_h + margin); })
-        .attr("transform", "translate (1, 1)")
-        .attr("width", fig_w)
-        .attr("height", fig_h)
-        .attr("id", function(d) { return "fig_" + d.i + "_" + d.j;})
-        .each(function(d) {
-            var id = "fig_" + d.i + "_" + d.j;
-            d3.xml("human.svg", "image/svg+xml", function(xml) {
-                document.getElementById(id).appendChild(xml.documentElement);
-                console.log("Adding new!");
-            });
-    });
-    /*
     figures
-        .attr("xlink:href",function(d) {
-            if(d.legend == "killed") {
-                return "dead_human.svg";
-            } else {
-                return "human.svg";
-            }})
+        .attr("xlink:href",function(d) { return "svg/" + d.source; })
         .attr("class", function(d) { return d.legend; })
         .attr("class", "fig")
         .attr("fill", function(d) { return d.color; })
@@ -151,12 +147,7 @@ function draw_rectangle() {
         .style("stroke-width", "2px");
 
     figures.enter().append("image")
-        .attr("xlink:href",function(d) {
-            if(d.legend == "killed") {
-                return "dead_human.svg";
-            } else {
-                return "human.svg";
-            }})
+        .attr("xlink:href",function(d) { return "svg/" + d.source; })
         .attr("class", function(d) { return d.legend; })
         .attr("class", "fig")
         .attr("x", function(d) { return d.i * (fig_w + margin); })
@@ -167,7 +158,6 @@ function draw_rectangle() {
         .style("stroke", function(d) { return d.bordercolor; })
         .style("fill", function(d) { return d.color; })
         .style("stroke-width", "2px");
-    */
 
     figures.exit()
         .style("fill-opacity", 1e-6)
@@ -229,7 +219,7 @@ function transform_data(data) {
         while (j < NUMROW) {
             if (total_dead > 0) {
                 if (n < death_per_class.length && death_per_class[n][1] > 0) {
-                    result.push({"i": i, "j": j, "color": DEAD_COLOR, "legend": "killed", "bordercolor": class_color[death_per_class[n][0]]});
+                    result.push({"i": i, "j": j, "color": DEAD_COLOR, "source": DEAD_FIGURE_MAP[death_per_class[n][0]], "legend": "killed", "bordercolor": class_color[death_per_class[n][0]]});
                     death_per_class[n][1] -= 1;
                     if (death_per_class[n][1] < 1) {
                         n++;
@@ -239,7 +229,7 @@ function transform_data(data) {
             } else {
                 if (k < live_per_class.length && live_per_class[k][1] > 0) {
                     live_per_class[k][1] -= 1;
-                    result.push({"i": i, "j": j, "color": class_color[live_per_class[k][0]], "legend": live_per_class[k][0], "bordercolor": "none"});
+                    result.push({"i": i, "j": j, "color": class_color[live_per_class[k][0]], "source": ALIVE_FIGURE_MAP[death_per_class[k][0]], "legend": live_per_class[k][0], "bordercolor": "none"});
                     if (live_per_class[k][1] < 1) {
                         k++;
                     }

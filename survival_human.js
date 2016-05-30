@@ -55,9 +55,9 @@ function update_Plot(value) {
      figures
      .attr("xlink:href",function(d) {
      if(d.type == "killed") {
-         return "dead_human_red.svg";
+         return "svg/dead_human_red.svg";
          } else {
-         return "human.svg";
+         return "svg/human.svg";
      }})
      .attr("class", "fig")
      .transition().duration(500)
@@ -70,9 +70,9 @@ function update_Plot(value) {
     figures.enter().append("image")
         .attr("xlink:href",function(d) {
             if(d.type == "killed") {
-                return "dead_human_red.svg";
+                return "svg/dead_human_red.svg";
             } else {
-                return "human.svg";
+                return "svg/human.svg";
             }})
         .attr("class", "fig")
         .transition().duration(500)
