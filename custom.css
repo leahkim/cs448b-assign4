@@ -94,6 +94,11 @@ input.currency {
     padding-right: 15px;
 }
 
+
 #toggle_label {
     color: #8c8c8c;
+}
+
+.humans {
+    display: inline-block;
 }
