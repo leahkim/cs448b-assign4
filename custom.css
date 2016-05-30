@@ -93,3 +93,7 @@ input.currency {
     text-align: right;
     padding-right: 15px;
 }
+
+.humans {
+    display: inline-block;
+}
