@@ -106,6 +106,50 @@ function toggle_type(is_region) {
 }
 
 
+function update_figure_legend(data) {
+    labelGroup = d3.select("#figLabel");
+    textGroup = d3.select("#infoText");
+
+    var fig = labelGroup.selectAll(".fig_legend_image").data(data);
+    var textLabel = textGroup.selectAll(".fig_legend_text").data(data);
+
+    fig
+        .transition().duration(500)
+        .attr("width", fig_w)
+        .attr("height", fig_h)
+        .attr("class", "fig_legend_image");
+
+    textLabel
+        .transition().duration(500)
+        .text(function(d) {
+        return "= " + d.numPerFig + " people";
+    })
+        .attr("class", "fig_legend_text")
+        .attr("x", 0)
+        .attr("y", fig_h + 10);
+
+    fig.enter().append("image")
+        .attr("xlink:href", "svg/alive/human.svg")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", fig_w)
+        .attr("height", fig_h)
+        .attr("class", "fig_legend_image");
+
+    textLabel.enter().append("text")
+        .text(function(d) {
+        return "= " + d.numPerFig + " people";
+    })
+        .attr("x", 0)
+        .attr("y", fig_h + 10)
+        .attr("font-size", "10px")
+        .style("fill", "#808080")
+        .attr("class", "fig_legend_text");
+
+    fig.exit().remove();
+    textLabel.exit().remove();
+}
+
 
 function draw_rectangle() {
     var group = d3.select("#figGroup");
@@ -115,6 +159,10 @@ function draw_rectangle() {
         + data.kidnapped.total + " were kidnapped, "
         + data.killed.total + " were killed.");
     set_width_height(data.kidnapped.total);
+
+    var figlegdata = [{"numPerFig": (data.kidnapped.total / NUMFIGS).toFixed(2)}];
+    update_figure_legend(figlegdata);
+
     data = transform_data(data);
 
     var margin = 3;
@@ -383,7 +431,10 @@ function draw_timeline() {
     draw_heatmap();
 
     var svg = d3.select("#timeline_canvas").attr("width", CANVAS_W).attr("height", CANVAS_H);
-    var fig_group = svg.append("g").attr("id", "figGroup");
+    svg.append("g").attr("id", "figGroup");
+    var svg2 = d3.select("#figLegend_canvas");
+    svg2.append("g").attr("id", "figLabel");
+    svg2.append("g").attr("id", "infoText");
 
     create_legend();
     draw_rectangle();
