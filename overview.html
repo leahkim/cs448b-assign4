@@ -19,21 +19,21 @@
     <!-- Optional theme -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
 
-    <!-- Custom defined style -->
-    <link rel="stylesheet" type="text/css" href="custom.css" >
+    <!-- Custom defined stylesheets -->
+    <link rel="stylesheet" type="text/css" href="stylesheets/custom.css" >
 
     <!-- Latest compiled and minified JavaScript -->
     <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
     <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
-    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/mathjs/1.5.2/math.min.js"></script>
-    <script src="function-plot.js"></script> -->
 
   </head>
 
   <body>
+  <div id="bigContainer">
     <h1>Kidnapping by Terrorists: 1970~2014</h1>
-    <h3>Case 1: Ransom not demanded</h3>
+    <h3>Annual Kidnap Death Rate Heatmap & Breakdown by Categories</h3>
+    <h6>* Only considered cases when ransom was not demanded</h6>
     <div><svg id="heatmap_canvas"></svg></div>
     <div id="display_info"></div>
 
@@ -53,13 +53,16 @@
         });
       });
     </script>
-
     <div>
       <svg id="legend"></svg>
       <svg id="count_legend"></svg>
       <svg id="timeline_canvas"></svg>
-      <script src="timeline.js"></script>
     </div>
+  </div>
+  <div id="figureLegendBox">
+    blah!
+  </div>
+  <script src="scripts/timeline.js"></script>
   </body>
 
 </html>
