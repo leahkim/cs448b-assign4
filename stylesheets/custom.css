@@ -19,6 +19,38 @@ h6 {
     font-weight: normal;
     text-align: right;
 }
+
+.header {
+    display: block;
+    text-align: center;
+}
+
+.header h1, h2, a {
+    display: inline-block;
+}
+
+.header h1 {
+    margin-left: 130px;
+}
+
+.header a {
+    float: right;
+    margin-top: 25px;
+    padding: 5px;
+    border: 2px solid teal;
+    text-decoration: none;
+}
+
+.header a:link {
+    color: teal;
+}
+
+.header a:hover {
+    background-color: teal;
+    color: white;
+}
+
+
 #timeline_canvas{
     margin: 5px;
     padding: 5px;
