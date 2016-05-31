@@ -126,6 +126,7 @@ input.currency {
     border-radius: 3px;
     border-color: #e6e6e6;
     width: 100px;
+    height: 135px;
     text-align: center;
     float: left;
 }

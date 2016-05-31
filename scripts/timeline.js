@@ -126,7 +126,7 @@ function update_figure_legend(data) {
     })
         .attr("class", "fig_legend_text")
         .attr("x", 0)
-        .attr("y", fig_h + 10);
+        .attr("y", fig_h + 15);
 
     fig.enter().append("image")
         .attr("xlink:href", "svg/alive/human.svg")
@@ -141,7 +141,7 @@ function update_figure_legend(data) {
         return "= " + d.numPerFig + " people";
     })
         .attr("x", 0)
-        .attr("y", fig_h + 10)
+        .attr("y", fig_h + 15)
         .attr("font-size", "10px")
         .style("fill", "#808080")
         .attr("class", "fig_legend_text");
